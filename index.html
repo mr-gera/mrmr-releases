@@ -85,7 +85,16 @@
   .shot .mock { display: none; }
   .shot.missing img { display: none; }
   .shot.missing .mock { display: flex; }
-  .hero-shot { margin: 64px auto 0; max-width: 1080px; }
+  .hero-shot { margin: 64px auto 0; max-width: 1080px; border-radius: 20px; }
+  .shot > a { display: block; height: 100%; }
+
+  .shot.free { aspect-ratio: auto; background: transparent; }
+  .shot.free img { height: auto; max-height: 640px; object-fit: contain; object-position: center; }
+  .gallery { display: grid; grid-template-columns: 1.55fr 1fr; gap: 28px; margin-top: 48px; align-items: start; }
+  .gallery figure { margin: 0; }
+  .gallery .shot { aspect-ratio: auto; }
+  .gallery .shot img { height: auto; }
+  .gallery figcaption { margin-top: 14px; color: var(--muted); font-size: 15px; text-align: center; }
 
   /* Mock window drawn in CSS, shown until real screenshots are added */
   .mock { position: absolute; inset: 0; flex-direction: column; font: 12px/1.7 "JetBrains Mono", ui-monospace, monospace; color: #b9bdd0; }
@@ -161,7 +170,7 @@
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
 
   @media (max-width: 900px) {
-    .grid, .install { grid-template-columns: 1fr; }
+    .grid, .install, .gallery { grid-template-columns: 1fr; }
     .feature, .feature.flip { grid-template-columns: 1fr; gap: 28px; padding: 36px 0; }
     .feature.flip .text { order: 0; }
     .nav-right a.link { display: none; }
@@ -221,7 +230,7 @@
     </p>
 
     <figure class="shot hero-shot reveal" style="margin-left:auto;margin-right:auto">
-      <img src="screenshots/compare.png" alt="Comparison mode" loading="eager" onerror="this.parentElement.classList.add('missing')">
+      <img src="screenshots/compare.jpg" alt="MrMR comparison mode: raw text with authors next to the rendered diff" loading="eager" onerror="this.parentElement.classList.add('missing')">
       <div class="mock">
         <div class="bar"><i></i><i></i><i></i><span>WorkspaceViewModel.swift — main vs feature/describe</span></div>
         <div class="body">
@@ -308,27 +317,7 @@
           <li><span lang="en">Your working tree is never touched</span><span lang="uk">Робоча копія лишається недоторканою</span></li>
         </ul>
       </div>
-      <figure class="shot">
-        <img src="screenshots/changes.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
-        <div class="mock">
-          <div class="bar"><i></i><i></i><i></i><span>README.md — Current Version vs main</span></div>
-          <div class="body">
-            <div class="side"><div class="m"></div><div class="a"></div><div class="a"></div><div></div><div class="m"></div><div class="a"></div><div></div><div class="m"></div></div>
-            <div class="code">
-              <div class="ln"><b>1</b><span># MrMR</span></div>
-              <div class="ln"><b>2</b><span></span></div>
-              <div class="ln mod"><b>3</b><span>A native macOS repository browser for people who read more</span></div>
-              <div class="ln add"><b>4</b><span>than they write: open a folder, browse every file, compare</span></div>
-              <div class="ln add"><b>5</b><span>any two revisions with line-level highlights and blame.</span></div>
-              <div class="ln"><b>6</b><span></span></div>
-              <div class="ln"><b>7</b><span>## Features</span></div>
-              <div class="ln del"><b>8</b><span>- Markdown only.</span></div>
-              <div class="ln add"><b>9</b><span>- **Any file.** Markdown, JSON, source code, Quick Look.</span></div>
-              <div class="ln"><b>10</b><span>- **Workspace window per repository.**</span></div>
-            </div>
-          </div>
-        </div>
-      </figure>
+      <figure class="shot free"><a href="screenshots/diff-crop.jpg"><img src="screenshots/diff-crop.jpg" alt="Rich diff in the Markdown preview: added text in green" loading="lazy"></a></figure>
     </div>
 
     <div class="feature flip reveal">
@@ -342,24 +331,7 @@
           <li><span lang="en">Reports kept per repository</span><span lang="uk">Звіти зберігаються для кожного репозиторію</span></li>
         </ul>
       </div>
-      <figure class="shot">
-        <img src="screenshots/review.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
-        <div class="mock">
-          <div class="bar"><i></i><i></i><i></i><span>Review — feature/describe into main</span></div>
-          <div class="body"><div class="code">
-            <div class="panel">
-              <span class="verdict">Needs fixes</span>
-              <h4>Merge review: feature/describe → main</h4>
-              2 blocking, 3 suggestions. The prompt builder is solid; the answer store races with file changes.<br><br>
-              <b style="color:#ff8f93">Blocking</b><br>
-              • <u>DescribeFileUseCase.swift:48</u> — answer saved after the file changed<br>
-              • <u>ProjectContextFiles.swift:82</u> — follows symlinks out of the repository<br><br>
-              <b style="color:#ffc27a">Suggestions</b><br>
-              • <u>DescribeFileSheet.swift:120</u> — cancel the agent when the sheet closes
-            </div>
-          </div></div>
-        </div>
-      </figure>
+      <figure class="shot free"><a href="screenshots/review-crop.jpg"><img src="screenshots/review-crop.jpg" alt="Merge Review sheet: branches, reviewer, model, language and instructions" loading="lazy"></a></figure>
     </div>
 
     <div class="feature reveal">
@@ -373,21 +345,39 @@
           <li><span lang="en">English or Ukrainian</span><span lang="uk">Українською або англійською</span></li>
         </ul>
       </div>
-      <figure class="shot">
-        <img src="screenshots/describe.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
-        <div class="mock">
-          <div class="bar"><i></i><i></i><i></i><span>Describe — ProjectContextFiles.swift, lines 74–91</span></div>
-          <div class="body"><div class="code">
-            <div class="panel">
-              <h4>What this is</h4>
-              Code: the part of Describe that gathers project documents for the prompt.<br><br>
-              <h4>What it does</h4>
-              Reads each chosen file or folder, skips the file being described, and cuts the text to 12,000 characters per file and 60,000 in total.<br><br>
-              <h4>Changed since main</h4>
-              New in this branch. Repository files now must resolve inside the repository.
-            </div>
-          </div></div>
-        </div>
+      <figure class="shot free"><a href="screenshots/describe-crop.jpg"><img src="screenshots/describe-crop.jpg" alt="Describe explains selected lines of a Swift file" loading="lazy"></a></figure>
+    </div>
+
+    <div class="feature flip reveal">
+      <div class="text">
+        <div class="eyebrow"><span lang="en">Notes</span><span lang="uk">Нотатки</span></div>
+        <h3><span lang="en">Leave notes right on the line</span><span lang="uk">Нотатки просто на рядку</span></h3>
+        <p><span lang="en">Review pull requests the way you read them: write a note on any line, tick files as viewed, then export everything as a report.</span><span lang="uk">Переглядайте pull request так, як читаєте код: нотатка до будь-якого рядка, позначки «переглянуто» і експорт усього у звіт.</span></p>
+        <ul>
+          <li><span lang="en">Paste a GitHub, GitLab or Bitbucket link — no browser needed</span><span lang="uk">Вставте посилання з GitHub, GitLab чи Bitbucket — браузер не потрібен</span></li>
+          <li><span lang="en">Markdown report with <code>path:line</code> references</span><span lang="uk">Markdown-звіт із посиланнями <code>path:line</code></span></li>
+          <li><span lang="en">Permalinks to lines, pinned to the commit</span><span lang="uk">Постійні посилання на рядки, прив'язані до коміту</span></li>
+        </ul>
+      </div>
+      <figure class="shot free"><a href="screenshots/notes-crop.jpg"><img src="screenshots/notes-crop.jpg" alt="A note on line 8 of a Swift file" loading="lazy"></a></figure>
+    </div>
+  </div>
+</section>
+
+<section class="center" style="padding-top:24px">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow"><span lang="en">And more</span><span lang="uk">І ще</span></div>
+      <h2><span lang="en">Pleasant to read, easy to learn</span><span lang="uk">Приємно читати, легко опанувати</span></h2>
+    </div>
+    <div class="gallery">
+      <figure class="reveal">
+        <div class="shot"><a href="screenshots/markdown.jpg"><img src="screenshots/markdown.jpg" alt="Markdown preview of a README" loading="lazy"></a></div>
+        <figcaption><span lang="en">Markdown rendered GitHub-style, with an outline</span><span lang="uk">Markdown у стилі GitHub, зі змістом</span></figcaption>
+      </figure>
+      <figure class="reveal">
+        <div class="shot"><a href="screenshots/tutorial.jpg"><img src="screenshots/tutorial.jpg" alt="Built-in tutorial" loading="lazy"></a></div>
+        <figcaption><span lang="en">A five-minute tutorial, in English and Ukrainian</span><span lang="uk">П'ятихвилинний посібник українською та англійською</span></figcaption>
       </figure>
     </div>
   </div>
