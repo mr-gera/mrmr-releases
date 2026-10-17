@@ -2,6 +2,8 @@
 
 A macOS app for reading Markdown and reviewing changes in git repositories.
 
+**Website: [mr-gera.github.io/mrmr-releases](https://mr-gera.github.io/mrmr-releases/)** — features, screenshots, in English and Ukrainian.
+
 ## Download
 
 **[Download MrMR 1.1.0 (pre-release)](https://github.com/mr-gera/mrmr-releases/releases/download/v1.1.0/MrMR.dmg)**
