@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MrMR — Merge Review for macOS</title>
+<meta name="description" content="A native macOS repository browser: read any file, compare any two versions, and let AI review a merge or explain a file.">
+<meta property="og:title" content="MrMR — Merge Review for macOS">
+<meta property="og:description" content="Read any file, compare any two versions, let AI review the merge.">
+<meta property="og:image" content="https://mr-gera.github.io/mrmr-releases/assets/icon.png">
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c12;
+    --bg-2: #12131c;
+    --card: rgba(255,255,255,.04);
+    --card-border: rgba(255,255,255,.08);
+    --text: #eceef6;
+    --muted: #9aa0b4;
+    --violet: #7b5cf0;
+    --blue: #4a7fe0;
+    --teal: #1fc0c5;
+    --green: #33d17a;
+    --orange: #ff9f2e;
+    --red: #ff5a5f;
+    --grad: linear-gradient(135deg, var(--violet), var(--blue) 55%, var(--teal));
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+  /* Language switching: every translatable element exists in both languages. */
+  html[data-lang="en"] [lang="uk"], html[data-lang="uk"] [lang="en"] { display: none !important; }
+
+  /* Nav */
+  nav { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(160%) blur(18px); -webkit-backdrop-filter: saturate(160%) blur(18px);
+        background: rgba(11,12,18,.72); border-bottom: 1px solid rgba(255,255,255,.06); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; letter-spacing: -.01em; }
+  .brand img { width: 30px; height: 30px; }
+  .nav-right { display: flex; align-items: center; gap: 18px; }
+  .nav-right a.link { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .nav-right a.link:hover { color: var(--text); }
+  .lang { display: inline-flex; background: rgba(255,255,255,.06); border: 1px solid var(--card-border); border-radius: 999px; padding: 3px; }
+  .lang button { all: unset; cursor: pointer; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; color: var(--muted); }
+  .lang button[aria-pressed="true"] { background: rgba(255,255,255,.12); color: var(--text); }
+
+  /* Hero */
+  .hero { position: relative; padding: 96px 0 64px; text-align: center; }
+  .glow { position: absolute; inset: -200px 0 auto; height: 760px; pointer-events: none; z-index: -1;
+          background: radial-gradient(600px 340px at 30% 30%, rgba(123,92,240,.35), transparent 70%),
+                      radial-gradient(600px 340px at 70% 40%, rgba(31,192,197,.25), transparent 70%); filter: blur(10px); }
+  .hero-icon { width: 120px; height: 120px; filter: drop-shadow(0 20px 50px rgba(90,110,240,.45)); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; margin: 22px 0 18px; padding: 6px 14px; border-radius: 999px;
+          font-size: 13px; font-weight: 500; color: #cfd3ff; background: rgba(123,92,240,.14); border: 1px solid rgba(123,92,240,.35); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+  h1 { font-size: clamp(40px, 7vw, 76px); line-height: 1.04; letter-spacing: -.035em; margin: 0 auto 20px; max-width: 900px; font-weight: 800; }
+  h1 .g { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { font-size: clamp(17px, 2.2vw, 21px); color: var(--muted); max-width: 720px; margin: 0 auto 36px; }
+  .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 14px; font-weight: 600; text-decoration: none; font-size: 16px;
+         transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+  .btn.primary { background: var(--grad); color: white; box-shadow: 0 10px 30px rgba(74,127,224,.35); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(74,127,224,.5); }
+  .btn.ghost { background: rgba(255,255,255,.06); border: 1px solid var(--card-border); }
+  .btn.ghost:hover { background: rgba(255,255,255,.1); }
+  .btn svg { width: 18px; height: 18px; }
+  .meta { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  /* Screenshot frame */
+  .shot { position: relative; border-radius: 14px; overflow: hidden; background: #16171f; border: 1px solid rgba(255,255,255,.1);
+          box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.4); aspect-ratio: 16 / 10; }
+  .shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+  .shot .mock { display: none; }
+  .shot.missing img { display: none; }
+  .shot.missing .mock { display: flex; }
+  .hero-shot { margin: 64px auto 0; max-width: 1080px; }
+
+  /* Mock window drawn in CSS, shown until real screenshots are added */
+  .mock { position: absolute; inset: 0; flex-direction: column; font: 12px/1.7 "JetBrains Mono", ui-monospace, monospace; color: #b9bdd0; }
+  .mock .bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #1d1e27; border-bottom: 1px solid rgba(255,255,255,.06); flex: none; }
+  .mock .bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--red); }
+  .mock .bar i:nth-child(2) { background: #febc2e; } .mock .bar i:nth-child(3) { background: #28c840; }
+  .mock .bar span { margin-left: 12px; font: 600 12px Inter, sans-serif; color: #e6e8f2; }
+  .mock .body { flex: 1; display: flex; min-height: 0; }
+  .mock .side { width: 24%; background: #191a22; border-right: 1px solid rgba(255,255,255,.06); padding: 12px 10px; }
+  .mock .side div { height: 9px; border-radius: 4px; background: rgba(255,255,255,.08); margin: 9px 0; }
+  .mock .side div.a { background: rgba(51,209,122,.35); width: 70%; } .mock .side div.m { background: rgba(255,159,46,.35); width: 82%; }
+  .mock .code { flex: 1; padding: 12px 0; overflow: hidden; }
+  .mock .ln { display: flex; gap: 14px; padding: 0 14px; white-space: pre; }
+  .mock .ln b { width: 22px; text-align: right; color: #5c6075; font-weight: 400; }
+  .mock .ln.add { background: rgba(51,209,122,.12); box-shadow: inset 3px 0 var(--green); }
+  .mock .ln.mod { background: rgba(255,159,46,.12); box-shadow: inset 3px 0 var(--orange); }
+  .mock .ln.del { background: rgba(255,90,95,.12); box-shadow: inset 3px 0 var(--red); }
+  .mock .k { color: #c792ea; } .mock .s { color: #c3e88d; } .mock .f { color: #82aaff; } .mock .c { color: #676e95; }
+  .mock .finding { margin: 6px 14px 6px 50px; padding: 8px 12px; border-radius: 8px; font: 12px/1.5 Inter, sans-serif; color: #ffd9da;
+                   background: rgba(255,90,95,.1); border: 1px solid rgba(255,90,95,.35); white-space: normal; }
+  .mock .panel { margin: 18px; padding: 18px 20px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+                 font: 13px/1.6 Inter, sans-serif; color: #cdd1e2; white-space: normal; }
+  .mock .panel h4 { margin: 0 0 8px; font-size: 15px; color: #fff; }
+  .mock .verdict { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(255,159,46,.18); color: var(--orange); margin-bottom: 10px; }
+
+  /* Sections */
+  section { padding: 96px 0; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); margin-bottom: 12px; }
+  h2 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 16px; font-weight: 800; }
+  .sub { color: var(--muted); font-size: 18px; max-width: 640px; margin: 0; }
+  .center { text-align: center; } .center .sub { margin: 0 auto; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 48px; }
+  .card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 26px; transition: border-color .2s, transform .2s; }
+  .card:hover { border-color: rgba(123,92,240,.45); transform: translateY(-3px); }
+  .card .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 16px; background: rgba(123,92,240,.16); color: #b9a8ff; }
+  .card .ic svg { width: 22px; height: 22px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .feature { display: grid; grid-template-columns: 1fr 1.35fr; gap: 56px; align-items: center; padding: 56px 0; }
+  .feature.flip { grid-template-columns: 1.35fr 1fr; }
+  .feature.flip .text { order: 2; }
+  .feature h3 { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.025em; line-height: 1.15; margin: 0 0 14px; }
+  .feature p { color: var(--muted); margin: 0 0 14px; }
+  .feature ul { list-style: none; padding: 0; margin: 0; }
+  .feature li { position: relative; padding-left: 26px; margin: 8px 0; color: #cfd2e0; font-size: 15px; }
+  .feature li::before { content: ""; position: absolute; left: 4px; top: 9px; width: 8px; height: 8px; border-radius: 2px; background: var(--grad); }
+
+  .agents { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 32px; }
+  .agents span { padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--card-border); font-size: 14px; color: #d4d7e6; }
+
+  .safe { background: linear-gradient(180deg, transparent, rgba(31,192,197,.05) 40%, transparent); }
+
+  .install { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; counter-reset: step; }
+  .install .card { position: relative; padding-top: 58px; }
+  .install .card::before { counter-increment: step; content: counter(step); position: absolute; top: 22px; left: 26px; width: 26px; height: 26px; border-radius: 8px;
+                           display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--grad); color: white; }
+  code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  pre { margin: 12px 0 0; padding: 12px 14px; border-radius: 10px; background: #08090d; border: 1px solid var(--card-border); font-size: 12.5px; color: #c9cde0;
+        white-space: pre-wrap; word-break: break-all; }
+  .note { margin-top: 22px; color: var(--muted); font-size: 14px; text-align: center; }
+
+  .final { text-align: center; padding: 110px 0; position: relative; }
+  .final .glow { inset: 0; height: auto; }
+
+  footer { border-top: 1px solid rgba(255,255,255,.06); padding: 32px 0; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer a { color: var(--muted); }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+
+  @media (max-width: 900px) {
+    .grid, .install { grid-template-columns: 1fr; }
+    .feature, .feature.flip { grid-template-columns: 1fr; gap: 28px; padding: 36px 0; }
+    .feature.flip .text { order: 0; }
+    .nav-right a.link { display: none; }
+    section { padding: 64px 0; }
+    .hero { padding-top: 64px; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 16px; }
+    .mock .side { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/icon.png" alt="">MrMR</a>
+    <div class="nav-right">
+      <a class="link" href="#features"><span lang="en">Features</span><span lang="uk">Можливості</span></a>
+      <a class="link" href="#install"><span lang="en">Install</span><span lang="uk">Встановлення</span></a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+        <button type="button" data-set-lang="uk" aria-pressed="false">UA</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="glow"></div>
+  <div class="wrap">
+    <img class="hero-icon" src="assets/icon.png" alt="MrMR icon">
+    <div><span class="pill"><span class="dot"></span>
+      <span lang="en">New in 1.1 — Describe: AI explains any file or lines</span>
+      <span lang="uk">Нове в 1.1 — Describe: ШІ пояснює файл чи рядки</span>
+    </span></div>
+    <h1>
+      <span lang="en">Read the code.<br><span class="g">Review the merge.</span></span>
+      <span lang="uk">Читайте код.<br><span class="g">Перевіряйте злиття.</span></span>
+    </h1>
+    <p class="lead">
+      <span lang="en">A native macOS repository browser for people who read more code than they write. Compare any two versions, see who changed what and why — and let AI review a merge right where the files are.</span>
+      <span lang="uk">Нативний браузер репозиторіїв для macOS для тих, хто читає код частіше, ніж пише. Порівнюйте будь-які версії, дивіться, хто, що й навіщо змінив, — а ШІ перегляне злиття просто там, де лежать файли.</span>
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/mr-gera/mrmr-releases/releases/download/v1.1.0/MrMR.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
+        <span lang="en">Download for Mac</span><span lang="uk">Завантажити для Mac</span>
+      </a>
+      <a class="btn ghost" href="https://github.com/mr-gera/mrmr-releases/releases">
+        <span lang="en">All releases</span><span lang="uk">Усі версії</span>
+      </a>
+    </div>
+    <p class="meta">
+      <span lang="en"><b>v1.1.0</b> pre-release · macOS 14+ · Apple Silicon &amp; Intel · free</span>
+      <span lang="uk"><b>v1.1.0</b> pre-release · macOS 14+ · Apple Silicon та Intel · безкоштовно</span>
+    </p>
+
+    <figure class="shot hero-shot reveal" style="margin-left:auto;margin-right:auto">
+      <img src="screenshots/compare.png" alt="Comparison mode" loading="eager" onerror="this.parentElement.classList.add('missing')">
+      <div class="mock">
+        <div class="bar"><i></i><i></i><i></i><span>WorkspaceViewModel.swift — main vs feature/describe</span></div>
+        <div class="body">
+          <div class="side"><div></div><div class="m"></div><div class="a"></div><div></div><div class="m"></div><div></div><div class="a"></div><div></div><div></div><div class="m"></div></div>
+          <div class="code">
+            <div class="ln"><b>41</b><span><span class="k">func</span> <span class="f">describe</span>(file: URL) <span class="k">async</span> {</span></div>
+            <div class="ln add"><b>42</b><span>    <span class="k">let</span> context = ProjectContextFiles.<span class="f">read</span>(entries, root: root)</span></div>
+            <div class="ln add"><b>43</b><span>    <span class="k">let</span> diff = <span class="k">try await</span> git.<span class="f">fileDiff</span>(in: repo, base: base)</span></div>
+            <div class="ln mod"><b>44</b><span>    <span class="k">let</span> prompt = builder.<span class="f">prompt</span>(file, diff, context, language)</span></div>
+            <div class="ln"><b>45</b><span>    state = .<span class="f">running</span></span></div>
+            <div class="ln del"><b>46</b><span>    <span class="c">// TODO: run the agent in the repository</span></span></div>
+            <div class="ln add"><b>47</b><span>    <span class="k">let</span> answer = <span class="k">try await</span> agent.<span class="f">run</span>(prompt, in: .<span class="f">emptyFolder</span>)</span></div>
+            <div class="ln"><b>48</b><span>    store.<span class="f">save</span>(answer, for: file)</span></div>
+            <div class="ln"><b>49</b><span>}</span></div>
+            <div class="finding">⚠︎ <b>Blocking</b> — the answer is saved even when the file changed while the agent was running.</div>
+            <div class="ln"><b>50</b><span></span></div>
+            <div class="ln"><b>51</b><span><span class="k">private func</span> <span class="f">language</span>() -> <span class="f">Language</span> { prefs.<span class="f">language</span> }</span></div>
+            <div class="ln"><b>52</b><span></span></div>
+            <div class="ln"><b>53</b><span><span class="c">/// Files the agent reads about the project.</span></span></div>
+            <div class="ln add"><b>54</b><span><span class="k">func</span> <span class="f">contextFiles</span>() -> [<span class="f">String</span>] {</span></div>
+            <div class="ln add"><b>55</b><span>    prefs.<span class="f">contextFiles</span>(for: root) ?? ProjectContextFiles.<span class="f">defaults</span>(root: root)</span></div>
+            <div class="ln add"><b>56</b><span>}</span></div>
+            <div class="ln"><b>57</b><span></span></div>
+            <div class="ln"><b>58</b><span><span class="k">func</span> <span class="f">forget</span>(file: URL) <span class="k">async</span> {</span></div>
+            <div class="ln mod"><b>59</b><span>    <span class="k">await</span> store.<span class="f">remove</span>(file, lines: selection)</span></div>
+            <div class="ln"><b>60</b><span>}</span></div>
+          </div>
+        </div>
+      </div>
+    </figure>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap center reveal">
+    <div class="eyebrow"><span lang="en">Everything in one window</span><span lang="uk">Усе в одному вікні</span></div>
+    <h2><span lang="en">Built for reading and reviewing</span><span lang="uk">Створено для читання й рев'ю</span></h2>
+    <p class="sub"><span lang="en">Open a folder and get the whole repository: every file, every version, every author.</span><span lang="uk">Відкрийте теку — і маєте весь репозиторій: кожен файл, кожну версію, кожного автора.</span></p>
+  </div>
+  <div class="wrap grid">
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div>
+      <h3><span lang="en">Any file</span><span lang="uk">Будь-який файл</span></h3>
+      <p><span lang="en">Markdown GitHub-style, JSON as a tree, syntax colouring for ~40 languages, Quick Look for the rest. 100,000 lines open in a second.</span><span lang="uk">Markdown у стилі GitHub, JSON деревом, підсвітка ~40 мов, решта — через Quick Look. 100 000 рядків відкриваються за секунду.</span></p>
+    </div>
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v12M16 9v12M5 6l3-3 3 3M13 18l3 3 3-3"/></svg></div>
+      <h3><span lang="en">Compare any two versions</span><span lang="uk">Будь-які дві версії</span></h3>
+      <p><span lang="en">Working tree, commit, branch or tag on either side. Changed words highlighted, rich diff in the Markdown preview.</span><span lang="uk">Робоча копія, коміт, гілка чи тег з будь-якого боку. Підсвічені змінені слова, розширений diff у перегляді Markdown.</span></p>
+    </div>
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>
+      <h3><span lang="en">Blame &amp; history</span><span lang="uk">Blame та історія</span></h3>
+      <p><span lang="en">Who changed every line, when and in which commit. File history, Show Commit and a branch overview with ahead/behind.</span><span lang="uk">Хто змінив кожен рядок, коли і в якому коміті. Історія файлу, Show Commit та огляд гілок із випередженням і відставанням.</span></p>
+    </div>
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-4"/></svg></div>
+      <h3><span lang="en">Pull requests, no browser</span><span lang="uk">Pull request без браузера</span></h3>
+      <p><span lang="en">Paste a GitHub, GitLab or Bitbucket link. Mark files as viewed, leave notes on lines, export a report.</span><span lang="uk">Вставте посилання з GitHub, GitLab чи Bitbucket. Позначайте переглянуті файли, лишайте нотатки до рядків, експортуйте звіт.</span></p>
+    </div>
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></div>
+      <h3><span lang="en">AI merge review</span><span lang="uk">AI-рев'ю злиття</span></h3>
+      <p><span lang="en">Pick "merge X into Y" and a reviewer. Get a report with a verdict, and findings right under the lines they point at.</span><span lang="uk">Оберіть «злити X у Y» та рецензента. Отримайте звіт із вердиктом, а знахідки — просто під рядками, про які вони.</span></p>
+    </div>
+    <div class="card reveal">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></div>
+      <h3><span lang="en">Describe</span><span lang="uk">Describe</span></h3>
+      <p><span lang="en">AI explains a file or selected lines, in English or Ukrainian, the way that kind of document needs — and what changed since your branch.</span><span lang="uk">ШІ пояснює файл чи виділені рядки українською або англійською — так, як потрібно саме для такого документа, — і що змінилося від вашої гілки.</span></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="feature reveal">
+      <div class="text">
+        <div class="eyebrow"><span lang="en">Compare</span><span lang="uk">Порівняння</span></div>
+        <h3><span lang="en">Every change, in colour</span><span lang="uk">Кожна зміна — кольором</span></h3>
+        <p><span lang="en">Comparison mode, as in Xcode: pick any two versions and walk through the differences.</span><span lang="uk">Режим порівняння, як у Xcode: оберіть дві версії й пройдіться по відмінностях.</span></p>
+        <ul>
+          <li><span lang="en">Added, changed and removed lines in green, orange and red</span><span lang="uk">Додані, змінені й видалені рядки — зеленим, помаранчевим і червоним</span></li>
+          <li><span lang="en">Changes list with +/− counts and "Viewed" marks</span><span lang="uk">Список змін із лічильниками +/− і позначками «Переглянуто»</span></li>
+          <li><span lang="en">Your working tree is never touched</span><span lang="uk">Робоча копія лишається недоторканою</span></li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="screenshots/changes.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
+        <div class="mock">
+          <div class="bar"><i></i><i></i><i></i><span>README.md — Current Version vs main</span></div>
+          <div class="body">
+            <div class="side"><div class="m"></div><div class="a"></div><div class="a"></div><div></div><div class="m"></div><div class="a"></div><div></div><div class="m"></div></div>
+            <div class="code">
+              <div class="ln"><b>1</b><span># MrMR</span></div>
+              <div class="ln"><b>2</b><span></span></div>
+              <div class="ln mod"><b>3</b><span>A native macOS repository browser for people who read more</span></div>
+              <div class="ln add"><b>4</b><span>than they write: open a folder, browse every file, compare</span></div>
+              <div class="ln add"><b>5</b><span>any two revisions with line-level highlights and blame.</span></div>
+              <div class="ln"><b>6</b><span></span></div>
+              <div class="ln"><b>7</b><span>## Features</span></div>
+              <div class="ln del"><b>8</b><span>- Markdown only.</span></div>
+              <div class="ln add"><b>9</b><span>- **Any file.** Markdown, JSON, source code, Quick Look.</span></div>
+              <div class="ln"><b>10</b><span>- **Workspace window per repository.**</span></div>
+            </div>
+          </div>
+        </div>
+      </figure>
+    </div>
+
+    <div class="feature flip reveal">
+      <div class="text">
+        <div class="eyebrow"><span lang="en">AI review</span><span lang="uk">AI-рев'ю</span></div>
+        <h3><span lang="en">A second pair of eyes on every merge</span><span lang="uk">Друга пара очей на кожне злиття</span></h3>
+        <p><span lang="en">The reviewer reads the diff with read-only tools in a temporary copy of the branch while you watch, then writes a report.</span><span lang="uk">Рецензент читає diff інструментами лише для читання в тимчасовій копії гілки, поки ви стежите, і пише звіт.</span></p>
+        <ul>
+          <li><span lang="en">Verdict and clickable <code>path:line</code> findings</span><span lang="uk">Вердикт і клікабельні знахідки <code>path:line</code></span></li>
+          <li><span lang="en">Your own review instructions, or your team's, shared through git</span><span lang="uk">Власні інструкції для рев'ю або командні, спільні через git</span></li>
+          <li><span lang="en">Reports kept per repository</span><span lang="uk">Звіти зберігаються для кожного репозиторію</span></li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="screenshots/review.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
+        <div class="mock">
+          <div class="bar"><i></i><i></i><i></i><span>Review — feature/describe into main</span></div>
+          <div class="body"><div class="code">
+            <div class="panel">
+              <span class="verdict">Needs fixes</span>
+              <h4>Merge review: feature/describe → main</h4>
+              2 blocking, 3 suggestions. The prompt builder is solid; the answer store races with file changes.<br><br>
+              <b style="color:#ff8f93">Blocking</b><br>
+              • <u>DescribeFileUseCase.swift:48</u> — answer saved after the file changed<br>
+              • <u>ProjectContextFiles.swift:82</u> — follows symlinks out of the repository<br><br>
+              <b style="color:#ffc27a">Suggestions</b><br>
+              • <u>DescribeFileSheet.swift:120</u> — cancel the agent when the sheet closes
+            </div>
+          </div></div>
+        </div>
+      </figure>
+    </div>
+
+    <div class="feature reveal">
+      <div class="text">
+        <div class="eyebrow">Describe</div>
+        <h3><span lang="en">Ask what a file is about</span><span lang="uk">Спитайте, про що цей файл</span></h3>
+        <p><span lang="en">MrMR first works out what the file is — code, spec, plan, architecture decision, docs — and explains it the way that kind of document needs.</span><span lang="uk">Спершу MrMR визначає, що це за файл — код, специфікація, план, архітектурне рішення, документація, — і пояснює його відповідно.</span></p>
+        <ul>
+          <li><span lang="en">Whole file or selected lines</span><span lang="uk">Увесь файл або виділені рядки</span></li>
+          <li><span lang="en">Knows your project from README, specs and glossaries</span><span lang="uk">Знає ваш проєкт із README, специфікацій і глосаріїв</span></li>
+          <li><span lang="en">English or Ukrainian</span><span lang="uk">Українською або англійською</span></li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="screenshots/describe.png" alt="" loading="lazy" onerror="this.parentElement.classList.add('missing')">
+        <div class="mock">
+          <div class="bar"><i></i><i></i><i></i><span>Describe — ProjectContextFiles.swift, lines 74–91</span></div>
+          <div class="body"><div class="code">
+            <div class="panel">
+              <h4>What this is</h4>
+              Code: the part of Describe that gathers project documents for the prompt.<br><br>
+              <h4>What it does</h4>
+              Reads each chosen file or folder, skips the file being described, and cuts the text to 12,000 characters per file and 60,000 in total.<br><br>
+              <h4>Changed since main</h4>
+              New in this branch. Repository files now must resolve inside the repository.
+            </div>
+          </div></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="center">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span lang="en">Bring your own AI</span><span lang="uk">Ваш власний ШІ</span></div>
+    <h2><span lang="en">Works with the tools you already use</span><span lang="uk">Працює з інструментами, які у вас уже є</span></h2>
+    <p class="sub"><span lang="en">Use your own subscription or API key. Keys stay in the macOS keychain.</span><span lang="uk">Використовуйте власну підписку чи ключ API. Ключі зберігаються у в'язці ключів macOS.</span></p>
+    <div class="agents">
+      <span>Claude Code</span><span>Codex CLI</span><span>OpenAI</span><span>OpenRouter</span><span>Gemini</span><span>Anthropic API</span>
+      <span>Mistral</span><span>DeepSeek</span><span>Groq</span><span>Ollama</span><span>LM Studio</span>
+    </div>
+  </div>
+</section>
+
+<section class="safe center">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span lang="en">Safe by design</span><span lang="uk">Безпечно за задумом</span></div>
+    <h2><span lang="en">Your repository stays yours</span><span lang="uk">Ваш репозиторій лишається вашим</span></h2>
+    <p class="sub"><span lang="en">Files change only when you edit and save them. MrMR never commits, pushes, rebases or switches branches on its own. Reviews run read-only, in a temporary copy of the branch.</span><span lang="uk">Файли змінюються лише тоді, коли ви їх редагуєте й зберігаєте. MrMR сам нічого не комітить, не пушить, не перебазовує й не перемикає гілок. Рев'ю працює лише на читання, у тимчасовій копії гілки.</span></p>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="center reveal">
+      <div class="eyebrow"><span lang="en">Install</span><span lang="uk">Встановлення</span></div>
+      <h2><span lang="en">Up and running in a minute</span><span lang="uk">Готово за хвилину</span></h2>
+    </div>
+    <div class="install">
+      <div class="card reveal">
+        <h3><span lang="en">Download</span><span lang="uk">Завантажте</span></h3>
+        <p><span lang="en">Get <a href="https://github.com/mr-gera/mrmr-releases/releases/download/v1.1.0/MrMR.dmg">MrMR.dmg</a> and open it.</span><span lang="uk">Завантажте <a href="https://github.com/mr-gera/mrmr-releases/releases/download/v1.1.0/MrMR.dmg">MrMR.dmg</a> і відкрийте його.</span></p>
+      </div>
+      <div class="card reveal">
+        <h3><span lang="en">Drag to Applications</span><span lang="uk">Перетягніть у Applications</span></h3>
+        <p><span lang="en">The pre-release is not notarized yet. If macOS blocks the first launch, click <b>Open Anyway</b> in System Settings → Privacy &amp; Security, or run:</span><span lang="uk">Pre-release ще не нотаризовано. Якщо macOS заблокує перший запуск, натисніть <b>Open Anyway</b> у System Settings → Privacy &amp; Security або виконайте:</span></p>
+        <pre>xattr -dr com.apple.quarantine /Applications/MrMR.app</pre>
+      </div>
+      <div class="card reveal">
+        <h3><span lang="en">Optional: the CLI</span><span lang="uk">За бажанням: CLI</span></h3>
+        <p><span lang="en">Open any repository from Terminal with <code>mrmr .</code></span><span lang="uk">Відкривайте будь-який репозиторій із термінала командою <code>mrmr .</code></span></p>
+        <pre>ln -s /Applications/MrMR.app/Contents/Resources/mrmr /usr/local/bin/mrmr</pre>
+      </div>
+    </div>
+    <p class="note"><span lang="en">Requires git. AI features need Claude Code, Codex or an API key of your own.</span><span lang="uk">Потрібен git. Для функцій ШІ потрібні Claude Code, Codex або власний ключ API.</span></p>
+  </div>
+</section>
+
+<section class="final">
+  <div class="glow"></div>
+  <div class="wrap reveal">
+    <img class="hero-icon" src="assets/icon.png" alt="" style="width:88px;height:88px">
+    <h2><span lang="en">Review smarter, today.</span><span lang="uk">Перевіряйте розумніше вже сьогодні.</span></h2>
+    <div class="cta" style="margin-top:28px">
+      <a class="btn primary" href="https://github.com/mr-gera/mrmr-releases/releases/download/v1.1.0/MrMR.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
+        <span lang="en">Download MrMR 1.1.0</span><span lang="uk">Завантажити MrMR 1.1.0</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 MrMR</span>
+    <span><a href="https://github.com/mr-gera/mrmr-releases/releases"><span lang="en">Releases</span><span lang="uk">Версії</span></a></span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    function setLang(lang) {
+      root.setAttribute('data-lang', lang);
+      root.setAttribute('lang', lang);
+      document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.getAttribute('data-set-lang') === lang));
+      });
+      try { localStorage.setItem('mrmr.lang', lang); } catch (e) {}
+    }
+    var saved = null;
+    try { saved = localStorage.getItem('mrmr.lang'); } catch (e) {}
+    var browser = (navigator.language || 'en').toLowerCase();
+    setLang(saved || (browser.indexOf('uk') === 0 ? 'uk' : 'en'));
+    document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.getAttribute('data-set-lang')); });
+    });
+
+    var items = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      items.forEach(function (el) { io.observe(el); });
+    } else {
+      items.forEach(function (el) { el.classList.add('in'); });
+    }
+  })();
+</script>
+</body>
+</html>
